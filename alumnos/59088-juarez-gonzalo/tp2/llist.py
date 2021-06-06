@@ -50,19 +50,30 @@ class List():
             next = curr.next
         return next
 
+    def print_list(self):
+        curr = self.head.next
+        while curr != self.head:
+            print(curr)
+            curr = curr.next
+
 class Mem_Node(List_Head):
     # necesita exclusion mutua externa antes de modificar ttl
     # mmap y mmunmap externos
-    def __init__(self, mm, ttl):
+    def __init__(self, mm):
         self.mm = mm
-        self.ttl = ttl
         super().__init__()
 
-class Ttl_List(List):
-    def delete_ttl(self, rm):
-        # head no tiene .ttl, es un stub que hace mas facil el uso de la lista
-        if rm == self.head:
-            return
-        rm.ttl -= 1
-        if rm.ttl == 0:
-            self.delete(rm)
+if __name__ == "__main__":
+    l = List()
+    l.enqueue(Mem_Node(0))
+    curr = l.head.next
+    while curr != l.head:
+        print(curr)
+        curr = curr.next
+    print(l.dequeue())
+    curr = l.head.next
+    while curr != l.head:
+        print(curr)
+        curr = curr.next
+    print(l.dequeue())
+    curr = l.head.next

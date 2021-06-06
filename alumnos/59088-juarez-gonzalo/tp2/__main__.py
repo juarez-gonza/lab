@@ -14,9 +14,9 @@ NCONSUM = NCOLORS
 out_mmap = None
 rc_rot = None
 
-mm_list = None
-mm_mtx = None
-mm_condvar = None
+mm_queues = []
+mm_mtxs = []
+mm_condvars = []
 
 def consumer(in_header, out_header, n, color_offset, mmnode, rbc):
     b_per_px = BYTES_PER_PX(out_header)
@@ -25,21 +25,18 @@ def consumer(in_header, out_header, n, color_offset, mmnode, rbc):
         out_byte = byte_rot(rc_rot, in_header, out_header, rbc + color_byte)
         out_mmap[out_byte] = mmnode.mm[color_byte]
 
-def consumer_wait(in_header, out_header, rsize, color_offset):
+def consumer_wait(in_header, out_header, rsize, color_offset, mm_queue, mm_mtx, mm_condvar):
     bodybytes = BODYSIZE(out_header)
     leftbytes = bodybytes
 
-    curr = mm_list.head
-    next = None
+    curr = None
     while leftbytes > 0:
 
         mm_mtx.acquire()
-        next = mm_list.singly_next_safe(curr)
-        while not next:
+        curr = mm_queue.dequeue()
+        while not curr:
             mm_condvar.wait()
-            next = mm_list.singly_next_safe(curr)
-        mm_list.delete_ttl(curr)
-        curr = next
+            curr = mm_queue.dequeue()
         mm_mtx.release()
 
         n = rsize if rsize < leftbytes else leftbytes
@@ -52,18 +49,14 @@ def producer(in_header, filepath, rsize):
     in_fd = os.open(filepath, os.O_RDONLY)
 
     os.lseek(in_fd, HEADERSIZE(in_header), os.SEEK_SET)
+    rbc = 0
     while (rb := os.read(in_fd, rsize)) != b"":
-        mm_mtx.acquire()
-
-        #mm = mmap.mmap(-1, len(rb))
-        #mm.write(rb)
-        mm = rb
-        mmnode = Mem_Node(mm, NCONSUM)
-        mm_list.add_tail(mmnode)
-
-        mm_condvar.notify_all()
-        mm_mtx.release()
-
+        for i in range(NCONSUM):
+            mm_mtxs[i].acquire()
+            mmnode = Mem_Node(rb)
+            mm_queues[i].enqueue(mmnode)
+            mm_condvars[i].notify()
+            mm_mtxs[i].release()
 
 def w_mmap2file(out_filename):
     out_fd = os.open(out_filename, os.O_CREAT | os.O_RDONLY | os.O_WRONLY, stat.S_IRUSR | stat.S_IWUSR)
@@ -91,13 +84,16 @@ if __name__ == "__main__":
 
     rsize = PPM_ALIGN(in_header, args["rsize"])
 
-    mm_list = Ttl_List()
-    mm_mtx = threading.Lock()
-    mm_condvar = threading.Condition(mm_mtx)
-
     pool = []
     for i in range(NCHILD):
-        pool.append(threading.Thread(target=consumer_wait, args=(in_header, out_header, rsize, i)))
+        mm_queues.append(List())
+        mm_mtxs.append(threading.Lock())
+        mm_condvars.append(threading.Condition(mm_mtxs[i]))
+
+        pool.append(threading.Thread(
+            target=consumer_wait,
+            args=(in_header, out_header, rsize, i, mm_queues[i], mm_mtxs[i], mm_condvars[i]))
+        )
         pool[i].start()
 
     producer(in_header, args["filepath"], rsize)
