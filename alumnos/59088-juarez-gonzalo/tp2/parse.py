@@ -21,18 +21,26 @@ def usagendie():
     sys.stdout.write(h)
     sys.exit(1)
 
+CCW = 1
+CW = 2
+WALSH = 3
+
 def parse_args(argv):
-    opt, args = getopt.getopt(argv, "s:f:h", ["size=", "file=", "sentido", "help"])
+    opt, args = getopt.getopt(argv, "s:f:h", ["size=", "file=", "sentido", "walsh", "help"])
     filename = ""
     filepath = ""
     rsize = 0
-    rotopt = False
+    rotopt = CCW
 
     for o in opt:
         oname = o[0].replace("-","")
 
         if oname == "sentido":
-            rotopt = True
+            rotopt = CW
+            continue
+
+        if oname[0] == "w":
+            rotopt = WALSH
             continue
 
         if oname[0] == "s":
@@ -61,7 +69,7 @@ def parse_args(argv):
         "filename": filename,
         "filepath": filepath,
         "rsize": rsize,
-        "sentido": rotopt
+        "rotopt": rotopt
     }
 
 def search_fileheader(filepath):

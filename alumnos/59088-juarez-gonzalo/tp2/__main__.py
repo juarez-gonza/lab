@@ -70,14 +70,18 @@ def w_mmap2file(out_filename):
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
 
-    if args["sentido"]:
-        rc_rot = ccw_rc_rot
-    else:
+    if args["rotopt"] == WALSH:
+        rc_rot = walsh_rc_rot
+    elif args["rotopt"] == CW:
         rc_rot = cw_rc_rot
+    else:
+        rc_rot = ccw_rc_rot
 
     in_header = search_fileheader(args["filepath"])
     out_header = header_cp(in_header)
-    swap_rc(out_header)
+
+    if args["rotopt"] != 3:
+        swap_rc(out_header)
 
     out_mmap = mmap.mmap(-1, FILESIZE(out_header))
     out_mmap.write(out_header["content"])
@@ -100,10 +104,12 @@ if __name__ == "__main__":
     for p in pool:
         p.join()
 
-    if args["sentido"]:
-        out_filename = "ccw." + args["filename"]
-    else:
+    if args["rotopt"] == WALSH:
+        out_filename = "walsh." + args["filename"]
+    elif args["rotopt"] == CW:
         out_filename = "cw." + args["filename"]
+    else:
+        out_filename = "ccw." + args["filename"]
 
     w_mmap2file(out_filename)
 
