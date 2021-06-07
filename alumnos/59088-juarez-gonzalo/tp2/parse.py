@@ -5,6 +5,15 @@ import sys
 H_MAXSIZE = 512
 INFONL = 3
 
+CCW = 1
+CW = 2
+WALSH = 3
+
+R_FLAG = 0b001
+G_FLAG = 0b010
+B_FLAG = 0b100
+RGB_FLAG = 0b111
+
 def btoi(b_arr):
     ret = 0
     for i in range(len(b_arr)):
@@ -21,16 +30,13 @@ def usagendie():
     sys.stdout.write(h)
     sys.exit(1)
 
-CCW = 1
-CW = 2
-WALSH = 3
-
 def parse_args(argv):
-    opt, args = getopt.getopt(argv, "s:f:h", ["size=", "file=", "sentido", "walsh", "help"])
+    opt, args = getopt.getopt(argv, "s:f:h", ["size=", "file=", "colorfilter=", "sentido", "walsh", "help"])
     filename = ""
     filepath = ""
     rsize = 0
     rotopt = CCW
+    colorfilter = RGB_FLAG
 
     for o in opt:
         oname = o[0].replace("-","")
@@ -41,6 +47,10 @@ def parse_args(argv):
 
         if oname[0] == "w":
             rotopt = WALSH
+            continue
+
+        if oname[0] == "c":
+            colorfilter = int(o[1]) & RGB_FLAG
             continue
 
         if oname[0] == "s":
@@ -69,7 +79,8 @@ def parse_args(argv):
         "filename": filename,
         "filepath": filepath,
         "rsize": rsize,
-        "rotopt": rotopt
+        "rotopt": rotopt,
+        "colorfilter": colorfilter
     }
 
 def search_fileheader(filepath):

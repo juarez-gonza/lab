@@ -51,7 +51,7 @@ def producer(in_header, filepath, rsize):
     os.lseek(in_fd, HEADERSIZE(in_header), os.SEEK_SET)
     rbc = 0
     while (rb := os.read(in_fd, rsize)) != b"":
-        for i in range(NCONSUM):
+        for i in range(len(mm_mtxs)):
             mm_mtxs[i].acquire()
             mmnode = Mem_Node(rb)
             mm_queues[i].enqueue(mmnode)
@@ -77,10 +77,13 @@ if __name__ == "__main__":
     else:
         rc_rot = ccw_rc_rot
 
+    colorfilter = args["colorfilter"]
+    doswap = args["rotopt"] != WALSH
+
     in_header = search_fileheader(args["filepath"])
     out_header = header_cp(in_header)
 
-    if args["rotopt"] != 3:
+    if doswap:
         swap_rc(out_header)
 
     out_mmap = mmap.mmap(-1, FILESIZE(out_header))
@@ -90,15 +93,16 @@ if __name__ == "__main__":
 
     pool = []
     for i in range(NCHILD):
-        mm_queues.append(List())
-        mm_mtxs.append(threading.Lock())
-        mm_condvars.append(threading.Condition(mm_mtxs[i]))
+        if 1 << i & colorfilter:
+            mm_queues.append(List())
+            mm_mtxs.append(threading.Lock())
+            mm_condvars.append(threading.Condition(mm_mtxs[-1]))
 
-        pool.append(threading.Thread(
-            target=consumer_wait,
-            args=(in_header, out_header, rsize, i, mm_queues[i], mm_mtxs[i], mm_condvars[i]))
-        )
-        pool[i].start()
+            pool.append(threading.Thread(
+                target=consumer_wait,
+                args=(in_header, out_header, rsize, i, mm_queues[-1], mm_mtxs[-1], mm_condvars[-1]))
+            )
+            pool[-1].start()
 
     producer(in_header, args["filepath"], rsize)
     for p in pool:
