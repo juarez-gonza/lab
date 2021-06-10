@@ -1,3 +1,7 @@
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #define NCOLORS 3
 #define H_MAXSIZE 512
 
@@ -19,12 +23,7 @@ struct header {
 
 int headersize(struct header *headerp)
 {
-    char *c;
-    c = headerp->content;
-    while (*c++ != '\x00')
-        ;
-    c--;
-    return c - headerp->content;
+    return strlen(headerp->content);
 }
 
 unsigned long bodysize(struct header *headerp)
@@ -48,11 +47,77 @@ unsigned long ppm_align(struct header *headerp, unsigned long size)
     return (size / b_per_px) * b_per_px;
 }
 
-/*
-#include <stdio.h>
+void _swap_rc_content(char *str)
+{
+    char newstr[20];
+    char *space;
+    char *nl;
+    char *rowstr;
+    char *colstr;
 
+    space = strchr(str, '\x20');
+    nl = strchr(str, '\n');
+    *space = '\x00';
+    *nl = '\x00';
+
+    rowstr = space + 1;
+    colstr = str;
+
+    snprintf(newstr, 20, "%s %s", rowstr, colstr);
+    strncpy(str, newstr, strlen(newstr));
+
+    *nl = '\n';
+}
+
+
+#define RCLINE 2
+/*
+ * Heavily relies on headerp->content being lines separated by
+ *'\n' and terminating '\x00'
+ */
+void swap_rc_content(struct header *headerp)
+{
+    unsigned int rows, cols, count;
+    char *c;
+    char *nl;
+    int in_cmmnt;
+
+    in_cmmnt = 0;
+    count = RCLINE;
+    for (c = headerp->content; *c != '\x00'; c = nl + 1) {
+        /* puts '\x00' at '\n' address -> isolates line */
+        nl = strchr(c, '\n');
+        *nl = '\x00';
+        if (strchr(c, '#') == NULL)
+            count--;
+
+        /* restores '\n' as it was before isolating the line */
+        *nl = '\n';
+
+        if (count == 0) {
+            _swap_rc_content(c);
+        }
+    }
+}
+
+void _swap_rc(struct header *headerp)
+{
+    unsigned int tmp;
+
+    tmp = headerp->rows;
+    headerp->rows = headerp->cols;
+    headerp->cols = tmp;
+}
+
+void swap_rc(struct header *headerp)
+{
+    swap_rc_content(headerp);
+    _swap_rc(headerp);
+}
+
+/*
 struct header hdr = {
-    .content = "AAAA",
+    .content = "P6\n# Imagen ppm\n200 298\n255\n",
     .rows = 512,
     .cols = 200,
     .magic = "P6",
@@ -61,14 +126,14 @@ struct header hdr = {
 
 int main()
 {
-    int i;
-    for (i = 0; i < H_MAXSIZE - 100; i++)
-        hdr.content[i] = '\x41';
-    hdr.content[i] = '\x00';
     printf("headersize %d\n", headersize(&hdr));
     printf("bodysize %lu\n", bodysize(&hdr));
     printf("filesize %lu\n", filesize(&hdr));
     printf("ppm_align(512) = %lu\n", ppm_align(&hdr, 512));
+    printf("%s\tstrlen(hdr): %lu\n", hdr.content, strlen(hdr.content));
+    swap_rc(&hdr);
+    printf("%s\tstrlen(hdr): %lu\n", hdr.content, strlen(hdr.content));
+
     return 0;
 }
 */
