@@ -29,3 +29,21 @@ def byte_rot(rc_rot, in_header, out_header, in_offset):
     out_pixel = RC2PIXEL(out_header, out_r, out_c)
     out_pos = HEADERSIZE(out_header) + BODYBYTE_OFFSET(out_header, out_pixel, in_offset)
     return out_pos
+
+if __name__ == "__main__":
+    in_hdr = {
+        "content": "P6\n# Imagen ppm\n200 298\n255",
+        "magic": "P6",
+        "rows": 298,
+        "cols": 200,
+        "maxcolor": 255,
+    }
+    out_hdr = {
+        "content": "P6\n# Imagen ppm\n298 200\n255",
+        "magic": "P6",
+        "rows": 200,
+        "cols": 298,
+        "maxcolor": 255,
+    }
+    print(byte_rot(ccw_rc_rot, in_hdr, out_hdr, 1))
+    print(byte_rot(cw_rc_rot, in_hdr, out_hdr, 1))
