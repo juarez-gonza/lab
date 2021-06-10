@@ -69,33 +69,30 @@ unsigned long byte_rot(
     return out_pos;
 }
 
-
 /*
-#include <stdio.h>
 
 struct header in_hdr = {
-    .content = "P6\n# Imagen ppm\n200 298\n255",
+    .content = "P6\n# Imagen ppm\n200 298\n255\n",
     .magic = "P6",
     .rows = 298,
     .cols = 200,
     .maxcolor = 255,
     };
 
-struct header out_hdr = {
-    .content = "P6\n# Imagen ppm\n298 200\n255",
-    .magic = "P6",
-    .rows = 200,
-    .cols = 298,
-    .maxcolor = 255,
-    };
-
 int main()
 {
     unsigned long b;
+    struct header out_hdr;
+    memcpy(&out_hdr, &in_hdr, sizeof(struct header));
+    swap_rc(&out_hdr);
+    printf("\tcontent = %srows = %d, cols = %d\n", in_hdr.content, in_hdr.rows, in_hdr.cols);
+    printf("\tcontent = %srows = %d, cols = %d\n", out_hdr.content, out_hdr.rows, out_hdr.cols);
+
     b = byte_rot(ccw_rc_rot, &in_hdr, &out_hdr, 1);
     printf("%lu\n", b);
 
     b = byte_rot(cw_rc_rot, &in_hdr, &out_hdr, 1);
     printf("%lu\n", b);
 }
+
 */

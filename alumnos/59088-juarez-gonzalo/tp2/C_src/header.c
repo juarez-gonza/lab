@@ -96,6 +96,7 @@ void swap_rc_content(struct header *headerp)
 
         if (count == 0) {
             _swap_rc_content(c);
+            break;
         }
     }
 }

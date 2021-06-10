@@ -32,14 +32,14 @@ def byte_rot(rc_rot, in_header, out_header, in_offset):
 
 if __name__ == "__main__":
     in_hdr = {
-        "content": "P6\n# Imagen ppm\n200 298\n255",
+        "content": "P6\n# Imagen ppm\n200 298\n255\n",
         "magic": "P6",
         "rows": 298,
         "cols": 200,
         "maxcolor": 255,
     }
     out_hdr = {
-        "content": "P6\n# Imagen ppm\n298 200\n255",
+        "content": "P6\n# Imagen ppm\n298 200\n255\n",
         "magic": "P6",
         "rows": 200,
         "cols": 298,
