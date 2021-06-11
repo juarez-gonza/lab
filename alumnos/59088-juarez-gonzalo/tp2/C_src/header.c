@@ -63,9 +63,11 @@ void _swap_rc_content(char *str)
     rowstr = space + 1;
     colstr = str;
 
+    /* yes it is intended not to be null terminated because a '\n' is what should follow next
+     * because the header still goes on
+     */
     snprintf(newstr, 20, "%s %s", rowstr, colstr);
     strncpy(str, newstr, strlen(newstr));
-
     *nl = '\n';
 }
 
@@ -73,7 +75,7 @@ void _swap_rc_content(char *str)
 #define RCLINE 2
 /*
  * Heavily relies on headerp->content being lines separated by
- *'\n' and terminating '\x00'
+ *'\n' and terminating '\x00' after the final '\n'
  */
 void swap_rc_content(struct header *headerp)
 {
@@ -91,7 +93,7 @@ void swap_rc_content(struct header *headerp)
         if (strchr(c, '#') == NULL)
             count--;
 
-        /* restores '\n' as it was before isolating the line */
+        /* restores '\n' to what it was before isolating the line */
         *nl = '\n';
 
         if (count == 0) {
