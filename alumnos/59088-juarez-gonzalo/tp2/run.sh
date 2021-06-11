@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-python3 ./__main__.py -f dog.ppm -s 512
+python3.8 ./__main__.py -f dog.ppm -s 512
